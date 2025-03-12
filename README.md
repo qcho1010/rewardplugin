@@ -56,7 +56,7 @@ The following items are planned for future development:
 ### Installation
 
 #### Option 1: Direct Download
-1. Download the latest release from [GitHub Releases](https://github.com/qcho1010/rewardplugin/releases/tag)
+1. Download the latest release from [GitHub Releases](https://github.com/qcho1010/rewardplugin/tag)
 2. In WordPress Admin, go to `Plugins > Add New > Upload Plugin`
 3. Upload the downloaded `wc-reward-points.zip`
 4. Click "Install Now" and then "Activate"
