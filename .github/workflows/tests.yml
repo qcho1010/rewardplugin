@@ -1,0 +1,73 @@
+name: Plugin Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [7.4, 8.0]
+        wordpress: [latest, '5.9', '5.8']
+        woocommerce: [latest, '6.0.0']
+        include:
+          - php: 7.4
+            wordpress: latest
+            woocommerce: latest
+        exclude:
+          - php: 8.0
+            wordpress: '5.8'
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        extensions: mbstring, intl, pdo_mysql
+        coverage: xdebug
+
+    - name: Setup WordPress
+      run: |
+        bash bin/install-wp-tests.sh wordpress_test root root localhost ${{ matrix.wordpress }}
+
+    - name: Download WooCommerce
+      run: |
+        if [ "${{ matrix.woocommerce }}" = "latest" ]; then
+          WOOCOMMERCE_VERSION=$(curl -s https://api.wordpress.org/plugins/info/1.0/woocommerce.json | jq -r '.version')
+        else
+          WOOCOMMERCE_VERSION=${{ matrix.woocommerce }}
+        fi
+        
+        mkdir -p wp-content/plugins
+        curl -L https://downloads.wordpress.org/plugin/woocommerce.$WOOCOMMERCE_VERSION.zip -o woocommerce.zip
+        unzip woocommerce.zip -d wp-content/plugins
+        rm woocommerce.zip
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Run tests
+      run: |
+        composer test
+
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: true 
