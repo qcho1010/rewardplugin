@@ -3,7 +3,7 @@ name: Create Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*' # Will trigger on any tag that starts with v, like v1.0.0
 
 jobs:
   build:
@@ -12,39 +12,57 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Setup PHP
+        
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.4'
-          tools: composer:v2
-
+          
       - name: Install dependencies
         run: composer install --no-dev --optimize-autoloader
-
-      - name: Create plugin archive
+        
+      - name: Create build directory
+        run: mkdir -p build
+        
+      - name: Prepare plugin files
         run: |
-          mkdir wc-reward-points
-          rsync -av --exclude={'.git*','.github','.gitignore','composer.json','composer.lock','phpunit.xml'} . wc-reward-points/
-          zip -r wc-reward-points.zip wc-reward-points
-
+          cp -r . build/rewardplugin
+          cd build
+          rm -rf rewardplugin/.git rewardplugin/.github rewardplugin/tests rewardplugin/phpunit.xml rewardplugin/phpunit.xml.dist rewardplugin/bin
+          
+      - name: Create ZIP file
+        run: |
+          cd build
+          zip -r wc-reward-points.zip rewardplugin
+        
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          files: build/wc-reward-points.zip
+          name: WooCommerce Reward Points ${{ github.ref_name }}
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./wc-reward-points.zip
-          asset_name: wc-reward-points.zip
-          asset_content_type: application/zip 
+          body: |
+            # WooCommerce Reward Points ${{ github.ref_name }}
+            
+            A comprehensive reward points system for WooCommerce with account rewards, referrals, ambassador program, and Trustpilot review rewards.
+            
+            ## Features
+            
+            - Account Rewards: Points for account creation, purchases, and reviews
+            - Social Sharing & Referral System: Generate referral links and reward points for successful referrals
+            - Brand Ambassador Program: Apply, manage ambassadors, and track commissions
+            - Trustpilot Review Rewards: Verify and reward customer reviews
+            
+            ## Installation
+            
+            1. Upload the zip file through WordPress admin panel
+            2. Activate the plugin
+            3. Configure settings through WooCommerce → Reward Points
+            
+            ## Requirements
+            
+            - WordPress 5.6+
+            - WooCommerce 5.0+
+            - PHP 7.2+ 

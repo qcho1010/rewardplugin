@@ -360,3 +360,30 @@ Run all tests:
 ```bash
 composer test
 ```
+
+## Creating Releases
+
+### Automated Release Process
+
+The repository includes a GitHub Actions workflow for automated releases:
+
+1. Make your changes and commit them to the main branch
+2. Use the provided script to create a new release:
+   ```bash
+   ./create-release.sh v1.0.0 "Your release description"
+   ```
+3. The GitHub Actions workflow will:
+   - Build a clean zip file with development files removed
+   - Create a GitHub release with the version tag
+   - Attach the zip file to the release
+
+### Manual Release Process
+
+If you prefer to create releases manually:
+
+1. A pre-built zip file is available in the repository: `wc-reward-points.zip`
+2. Go to [GitHub Releases](https://github.com/qcho1010/rewardplugin/releases)
+3. Click "Draft a new release"
+4. Enter your version tag (e.g., `v1.0.0`) 
+5. Upload the zip file
+6. Publish the release
